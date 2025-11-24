@@ -311,9 +311,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const response: CodeGenerationResponse = {
-      code,
-      language,
+    const response = {
+      success: true,
+      data: {
+        code,
+        language,
+      }
     };
 
     // Add response headers
