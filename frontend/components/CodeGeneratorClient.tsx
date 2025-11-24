@@ -110,6 +110,12 @@ export default function CodeGeneratorClient() {
 
       const data = await response.json();
       console.log("API Response received:", data.success ? "Success" : "Error");
+      console.log("API Response data:", data);
+      
+      // Check if response has error
+      if (!data.success || data.error) {
+        throw new Error(data.error || "Failed to generate code");
+      }
       
       const code = data.data?.code || data.code || "// No code generated";
       setGeneratedCode(code);
