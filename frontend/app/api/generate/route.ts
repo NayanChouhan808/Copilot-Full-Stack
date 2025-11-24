@@ -151,68 +151,32 @@ async function generateWithGemini(prompt: string, language: string): Promise<str
   // Use the correct model name from environment or default to gemini-2.5-flash
   const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   
-  const enhancedPrompt = `Generate ${language} code for the following request.
-Only return the code without any explanations, markdown formatting, or code block markers.
-Just the raw, executable code.
-
-Language: ${language}
-Request: ${prompt}
-
-Code:`;
+  // Create language-specific prompt for better code generation
+  const languageForPrompt = language === 'cpp' ? 'C++' : 
+                           language === 'javascript' ? 'JavaScript' :
+                           language === 'typescript' ? 'TypeScript' :
+                           language.charAt(0).toUpperCase() + language.slice(1);
+  
+  const enhancedPrompt = `${languageForPrompt} code: ${prompt}`;
 
   try {
-    // Use the correct v1 endpoint with proper request format
-    const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
+    // Use the GoogleGenerativeAI SDK for proper handling
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(apiKey);
     
-    const requestBody = {
-      contents: [{
-        parts: [{
-          text: enhancedPrompt
-        }]
-      }],
+    const model = genAI.getGenerativeModel({
+      model: modelName,
       generationConfig: {
-        temperature: 0.3,        // Lower for faster, more focused responses
-        maxOutputTokens: 1024,   // Reduced for faster generation
-        topP: 0.8,
-        topK: 10
+        temperature: 0.1,
+        maxOutputTokens: 512,
+        topK: 10,
+        topP: 0.7,
       }
-    };
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      // Provide clearer messaging for common issues
-      if (res.status === 404 && /not found/i.test(errText)) {
-        throw new Error(`Model '${modelName}' not found or not supported. Response: ${errText}`);
-      }
-      if (res.status === 403 && /reported as leaked/i.test(errText)) {
-        throw new Error(`API key reported as leaked. Rotate your key in Google AI Studio and update GEMINI_API_KEY. Details: ${errText}`);
-      }
-      if (res.status === 429) {
-        throw new Error(`Gemini rate limit exceeded. Consider backoff or lowering request frequency. Details: ${errText}`);
-      }
-      throw new Error(`HTTP ${res.status} ${res.statusText}: ${errText}`);
-    }
-
-    const json = await res.json();
-
-    // Parse the response from Gemini API v1
-    let code = "";
-    if (json.candidates && Array.isArray(json.candidates) && json.candidates.length > 0) {
-      const candidate = json.candidates[0];
-      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-        code = candidate.content.parts[0].text || "";
-      }
-    }
-
-    if (!code) {
-      throw new Error("No text found in Gemini response");
-    }
+    const result = await model.generateContent(enhancedPrompt);
+    const response = await result.response;
+    let code = response.text();
 
     // Clean up any markdown code blocks if present
     return code
@@ -309,13 +273,15 @@ export async function POST(request: NextRequest) {
     }
 
     let code: string;
-    const mode = process.env.MODE || "mock";
+    // Force AI mode since we have the API key
+    const mode = "ai"; // Always use AI when API key is available
     const hasApiKey = !!process.env.GEMINI_API_KEY;
     const isProduction = process.env.NODE_ENV === "production";
 
     // Debug logging
     console.log("[API] MODE:", mode);
     console.log("[API] Has API Key:", hasApiKey);
+    console.log("[API] GEMINI_MODEL:", process.env.GEMINI_MODEL);
     console.log("[API] Will use:", mode === "ai" && hasApiKey ? "GEMINI AI" : "MOCK TEMPLATES");
 
     // Use Gemini API if available and mode is 'ai', otherwise use mock templates
@@ -329,22 +295,17 @@ export async function POST(request: NextRequest) {
         }
       } catch (apiError) {
         const errorMessage = apiError instanceof Error ? apiError.message : "Unknown error";
-        console.error("Gemini API error, falling back to mock:", errorMessage);
+        const errorStack = apiError instanceof Error ? apiError.stack : "";
+        console.error("❌ Gemini API error:", errorMessage);
+        console.error("Stack:", errorStack);
 
         // Provide structured error meta for client (non-sensitive)
         const leakDetected = /reported as leaked/i.test(errorMessage);
         const modelNotFound = /not found/i.test(errorMessage) && /Model/.test(errorMessage);
         const rateLimited = /rate limit/i.test(errorMessage);
 
-        // Fallback to mock if API fails (NO DELAY - instant response)
-        code = selectTemplate(prompt, language);
-
-        if (isProduction) {
-          console.warn(`[Fallback] Using mock template for ${language}`);
-        }
-
-        // Attach diagnostic headers
-        const diagHeaders: Record<string,string> = {};
+        // Instead of falling back, throw the error so we can see what's wrong
+        throw new Error(`Gemini API failed: ${errorMessage}`);
         if (leakDetected) diagHeaders['X-Gemini-Key-Status'] = 'leaked';
         if (modelNotFound) diagHeaders['X-Gemini-Model-Status'] = 'not-found';
         if (rateLimited) diagHeaders['X-Gemini-RateLimit'] = 'exceeded';

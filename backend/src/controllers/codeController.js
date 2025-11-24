@@ -31,13 +31,10 @@ async function generateCode(req, res) {
 
   try {
     // 1. Get language_id from cache or database
-    // Handle "cpp" -> "C++" mapping for backwards compatibility
-    let languageToQuery = language;
-    if (language.toLowerCase() === 'cpp') {
-      languageToQuery = 'C++';
-    }
+    // Normalize language name to lowercase
+    const languageToQuery = language.toLowerCase();
     
-    let languageId = languageCache.get(languageToQuery.toLowerCase());
+    let languageId = languageCache.get(languageToQuery);
     
     if (!languageId) {
       // Not in cache, fetch from database
@@ -49,28 +46,35 @@ async function generateCode(req, res) {
       if (langResult.rows.length === 0) {
         return res.status(400).json({
           error: 'Invalid language',
-          details: `Language '${language}' is not supported`
+          details: `Language '${language}' is not supported. Supported languages: python, javascript, typescript, cpp, java, go, rust`
         });
       }
 
       languageId = langResult.rows[0].id;
       // Cache for future requests
-      languageCache.set(languageToQuery.toLowerCase(), languageId);
+      languageCache.set(languageToQuery, languageId);
     }
 
     // 2. Generate code using Gemini AI
     console.log(`Generating ${language} code for prompt: "${prompt.substring(0, 50)}..."`);
     
     const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp', // Use fastest model
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash', // Use 2.5 flash model
       generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2048, // Limit output for faster response
+        temperature: 0.1,
+        maxOutputTokens: 512,
+        topK: 10,
+        topP: 0.7,
       }
     });
 
-    // Shorter, more direct prompt for faster processing
-    const enhancedPrompt = `Write ${language} code: ${prompt}\n\nReturn only executable code, no explanations.`;
+    // Create language-specific prompt for better code generation
+    const languageForPrompt = language === 'cpp' ? 'C++' : 
+                             language === 'javascript' ? 'JavaScript' :
+                             language === 'typescript' ? 'TypeScript' :
+                             language.charAt(0).toUpperCase() + language.slice(1);
+    
+    const enhancedPrompt = `${languageForPrompt} code: ${prompt}`;
 
     // Generate code with Gemini AI - this is the slow part
     const result = await model.generateContent(enhancedPrompt);
