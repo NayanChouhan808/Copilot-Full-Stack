@@ -1,0 +1,47 @@
+// Database Schema for Code Generation Copilot
+// Simplified version for dbdiagram.io
+
+Table users {
+  id serial [primary key]
+  email varchar(255) [unique, not null]
+  username varchar(100) [not null]
+  created_at timestamp
+  updated_at timestamp
+  
+  indexes {
+    email
+  }
+}
+
+Table languages {
+  id serial [primary key]
+  name varchar(50) [unique, not null]
+  file_extension varchar(10) [not null]
+  syntax_highlighter varchar(50)
+  is_active boolean
+  created_at timestamp
+  
+  indexes {
+    name
+  }
+}
+
+Table generations {
+  id serial [primary key]
+  user_id integer [null]
+  language_id integer [not null]
+  prompt text [not null]
+  generated_code text [not null]
+  created_at timestamp
+  
+  indexes {
+    created_at
+    user_id
+    language_id
+    (user_id, created_at)
+  }
+}
+
+// Relationships
+Ref: generations.user_id > users.id [delete: set null]
+Ref: generations.language_id > languages.id [delete: restrict]

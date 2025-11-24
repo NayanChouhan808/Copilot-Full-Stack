@@ -1,0 +1,297 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Code Generation Copilot API",
+    "description": "AI-powered code generation API that converts natural language prompts into syntax-highlighted code. Supports multiple programming languages with both mock and real AI (Gemini) modes.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "url": "https://github.com/Arpitkushwahaa/Copilot"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local backend API server"
+    },
+    {
+      "url": "https://copilot-axgr.onrender.com",
+      "description": "Production backend API (Render)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Code Generation",
+      "description": "Generate code from natural language prompts"
+    },
+    {
+      "name": "System",
+      "description": "System health and monitoring endpoints"
+    }
+  ],
+  "paths": {
+    "/api/generate": {
+      "post": {
+        "tags": ["Code Generation"],
+        "summary": "Generate code from a prompt",
+        "description": "Generates code based on a natural language prompt and selected programming language. Uses either mock templates or real Gemini AI based on configuration.",
+        "operationId": "generateCode",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeGenerationRequest"
+              },
+              "examples": {
+                "pythonFunction": {
+                  "summary": "Python function example",
+                  "value": {
+                    "prompt": "Write a Python function to reverse a string",
+                    "language": "python"
+                  }
+                },
+                "reactComponent": {
+                  "summary": "React component example",
+                  "value": {
+                    "prompt": "Create a React todo list component with add and delete functionality",
+                    "language": "javascript"
+                  }
+                },
+                "sortAlgorithm": {
+                  "summary": "C++ sorting algorithm",
+                  "value": {
+                    "prompt": "Implement quicksort algorithm in C++",
+                    "language": "cpp"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Code successfully generated",
+            "headers": {
+              "X-Response-Time": {
+                "description": "Time taken to generate the code",
+                "schema": {
+                  "type": "string",
+                  "example": "1234ms"
+                }
+              },
+              "X-Mode": {
+                "description": "Mode used for generation (mock or ai)",
+                "schema": {
+                  "type": "string",
+                  "enum": ["mock", "ai"]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeGenerationResponse"
+                },
+                "examples": {
+                  "pythonCode": {
+                    "summary": "Python code response",
+                    "value": {
+                      "code": "def reverse_string(s):\n    \"\"\"Reverse a string using Python slicing\"\"\"\n    return s[::-1]\n\n# Example usage\ntext = \"Hello, World!\"\nreversed_text = reverse_string(text)\nprint(f\"Reversed: {reversed_text}\")",
+                      "language": "python"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid input parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missingPrompt": {
+                    "summary": "Missing prompt",
+                    "value": {
+                      "error": "Prompt and language are required"
+                    }
+                  },
+                  "promptTooLong": {
+                    "summary": "Prompt exceeds limit",
+                    "value": {
+                      "error": "Prompt is too long (max 5000 characters)"
+                    }
+                  },
+                  "invalidLanguage": {
+                    "summary": "Invalid language",
+                    "value": {
+                      "error": "Invalid language specified"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Rate limit exceeded. Please try again later."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Failed to generate code. Please try again."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Health check endpoint",
+        "description": "Returns the current health status and configuration of the API service.",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "healthy",
+                  "timestamp": "2025-11-23T10:30:00.000Z",
+                  "uptime": 3600.5,
+                  "environment": "production",
+                  "mode": "ai",
+                  "geminiConfigured": true,
+                  "version": "1.0.0"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CodeGenerationRequest": {
+        "type": "object",
+        "required": ["prompt", "language"],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "Natural language description of the code to generate",
+            "minLength": 1,
+            "maxLength": 5000,
+            "example": "Write a Python function to reverse a string"
+          },
+          "language": {
+            "type": "string",
+            "description": "Target programming language",
+            "enum": ["python", "javascript", "typescript", "cpp", "java", "go", "rust"],
+            "example": "python"
+          }
+        }
+      },
+      "CodeGenerationResponse": {
+        "type": "object",
+        "required": ["code", "language"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Generated code",
+            "example": "def reverse_string(s):\n    return s[::-1]"
+          },
+          "language": {
+            "type": "string",
+            "description": "Programming language of the generated code",
+            "enum": ["python", "javascript", "typescript", "cpp", "java", "go", "rust"],
+            "example": "python"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": ["status", "timestamp", "uptime", "environment", "mode", "geminiConfigured", "version"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Overall health status of the service",
+            "enum": ["healthy", "degraded", "unhealthy"],
+            "example": "healthy"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Current server timestamp in ISO 8601 format",
+            "example": "2025-11-23T10:30:00.000Z"
+          },
+          "uptime": {
+            "type": "number",
+            "description": "Server uptime in seconds",
+            "example": 3600.5
+          },
+          "environment": {
+            "type": "string",
+            "description": "Current environment (development/production)",
+            "enum": ["development", "production"],
+            "example": "production"
+          },
+          "mode": {
+            "type": "string",
+            "description": "Current generation mode (mock/ai)",
+            "enum": ["mock", "ai"],
+            "example": "ai"
+          },
+          "geminiConfigured": {
+            "type": "boolean",
+            "description": "Whether Gemini API key is configured",
+            "example": true
+          },
+          "version": {
+            "type": "string",
+            "description": "API version",
+            "example": "1.0.0"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message describing what went wrong",
+            "example": "Prompt and language are required"
+          }
+        }
+      }
+    }
+  }
+}

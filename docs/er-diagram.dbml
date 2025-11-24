@@ -1,0 +1,86 @@
+// Database Schema for Code Generation Copilot
+// Paste this into https://dbdiagram.io/d to generate visual diagram
+
+Table users {
+  id serial [primary key, note: 'Auto-incrementing user ID']
+  email varchar(255) [unique, not null, note: 'User email address']
+  username varchar(100) [not null, note: 'Display name']
+  created_at timestamp [default: `now()`, note: 'Account creation time']
+  updated_at timestamp [default: `now()`, note: 'Last profile update']
+  
+  indexes {
+    email [name: 'idx_users_email']
+  }
+  
+  Note: 'Stores user accounts for authentication and tracking code generations per user'
+}
+
+Table languages {
+  id serial [primary key, note: 'Auto-incrementing language ID']
+  name varchar(50) [unique, not null, note: 'Language name (e.g., Python, JavaScript)']
+  file_extension varchar(10) [not null, note: 'File extension (e.g., .py, .js)']
+  syntax_highlighter varchar(50) [note: 'Syntax highlighter identifier']
+  is_active boolean [default: true, note: 'Whether language is currently available']
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    name [name: 'idx_languages_name']
+  }
+  
+  Note: 'Normalized reference table for supported programming languages. Prevents typos and enables easy addition of new languages without code changes.'
+}
+
+Table generations {
+  id serial [primary key, note: 'Auto-incrementing generation ID']
+  user_id integer [null, note: 'User who created this generation (nullable for anonymous users)']
+  language_id integer [not null, note: 'Programming language used']
+  prompt text [not null, note: 'User prompt (1-5000 chars)']
+  generated_code text [not null, note: 'AI-generated code']
+  created_at timestamp [default: `now()`, note: 'When code was generated']
+  
+  indexes {
+    (created_at, desc) [name: 'idx_generations_created_at_desc', note: 'Speeds up paginated history queries']
+    user_id [name: 'idx_generations_user_id', note: 'Fast user filtering']
+    language_id [name: 'idx_generations_language_id', note: 'Fast language filtering']
+    (user_id, created_at, desc) [name: 'idx_generations_user_created', note: 'Composite index for user-specific pagination']
+  }
+  
+  Note: 'Core table storing all AI code generation history with foreign keys to users and languages'
+}
+
+// Relationships
+Ref: generations.user_id > users.id [delete: set null, note: 'User can have many generations. If user deleted, generations preserved with NULL user_id']
+Ref: generations.language_id > languages.id [delete: restrict, note: 'Each generation must have a language. Cannot delete language still in use']
+
+// Additional Notes
+Note project_description {
+  '''
+  # Code Generation Copilot Database Schema
+  
+  ## Design Decisions:
+  
+  ### 1. Normalization (3NF):
+  - Separate languages table eliminates redundant language strings
+  - Enables easy addition of new languages without code changes
+  - Prevents typos in language names
+  
+  ### 2. Foreign Key Strategies:
+  - user_id: ON DELETE SET NULL (preserves generations even if user deleted)
+  - language_id: ON DELETE RESTRICT (cannot delete active languages)
+  
+  ### 3. Indexing Strategy:
+  - idx_generations_created_at_desc: Optimizes ORDER BY created_at DESC
+  - Composite indexes: Covers both filtering and sorting in one index
+  - B-tree indexes: Fast lookups for foreign keys
+  
+  ### 4. Constraints:
+  - Check constraint: prompt length 1-5000 characters
+  - Check constraint: generated_code must not be empty
+  - Unique constraints: email, language name
+  
+  ### 5. Performance:
+  - Pagination complexity: O(log n + k) with DESC index
+  - Without index: O(n log n) for full table sort
+  - JOIN performance: O(log n) lookups via indexed foreign keys
+  '''
+}
