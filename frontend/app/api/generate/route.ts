@@ -299,18 +299,8 @@ export async function POST(request: NextRequest) {
         console.error("❌ Gemini API error:", errorMessage);
         console.error("Stack:", errorStack);
 
-        // Provide structured error meta for client (non-sensitive)
-        const leakDetected = /reported as leaked/i.test(errorMessage);
-        const modelNotFound = /not found/i.test(errorMessage) && /Model/.test(errorMessage);
-        const rateLimited = /rate limit/i.test(errorMessage);
-
         // Instead of falling back, throw the error so we can see what's wrong
         throw new Error(`Gemini API failed: ${errorMessage}`);
-        if (leakDetected) diagHeaders['X-Gemini-Key-Status'] = 'leaked';
-        if (modelNotFound) diagHeaders['X-Gemini-Model-Status'] = 'not-found';
-        if (rateLimited) diagHeaders['X-Gemini-RateLimit'] = 'exceeded';
-        // We'll merge these later before return
-        (globalThis as any).__lastGeminiDiag = diagHeaders;
       }
     } else {
       // Mock mode: instant response (no artificial delay)
@@ -328,12 +318,6 @@ export async function POST(request: NextRequest) {
 
     // Add response headers
     const res = NextResponse.json(response);
-    // Merge diagnostic headers if present
-    const diag = (globalThis as any).__lastGeminiDiag as Record<string,string> | undefined;
-    if (diag) {
-      Object.entries(diag).forEach(([k,v]) => res.headers.set(k,v));
-      delete (globalThis as any).__lastGeminiDiag;
-    }
     res.headers.set("X-Response-Time", `${Date.now() - startTime}ms`);
     res.headers.set("X-Mode", mode);
     
