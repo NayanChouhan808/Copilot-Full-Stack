@@ -6,8 +6,8 @@ import AppShell from "@/components/AppShell";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Code Generator Pro - AI Development Assistant",
-  description: "Professional AI-powered code generation tool for developers",
+  title: "AI Code Copilot - Generate Beautiful Code Instantly",
+  description: "Modern AI-powered code generation with stunning glassmorphism UI. Create code in Python, JavaScript, TypeScript, and more.",
 };
 
 export default function RootLayout({
