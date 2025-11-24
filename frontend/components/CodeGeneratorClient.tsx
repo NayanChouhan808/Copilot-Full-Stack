@@ -321,19 +321,23 @@ export default function CodeGeneratorClient() {
                   <select
                     value={language}
                     onChange={(e) => setLanguage(e.target.value as Language)}
-                    className="w-full px-4 py-3 glass dark:glass-dark rounded-xl text-base text-gray-900 dark:text-white font-medium cursor-pointer border-2 border-transparent hover:border-violet-300 dark:hover:border-violet-700 transition-all appearance-none [&>option]:bg-white [&>option]:dark:bg-gray-800 [&>option]:text-gray-900 [&>option]:dark:text-white"
+                    className="w-full px-4 py-3 glass dark:glass-dark rounded-xl text-base text-gray-900 dark:text-white font-medium cursor-pointer border-2 border-transparent hover:border-violet-300 dark:hover:border-violet-700 transition-all appearance-none"
                     style={{
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23667eea'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                       backgroundPosition: 'right 1rem center',
                       backgroundRepeat: 'no-repeat',
-                      backgroundSize: '1.5rem'
+                      backgroundSize: '1.5rem',
+                      colorScheme: theme === 'dark' ? 'dark' : 'light'
                     }}
                   >
                     {languages.map((lang) => (
                       <option 
                         key={lang} 
                         value={lang}
-                        className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        style={{
+                          backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
+                          color: theme === 'dark' ? '#ffffff' : '#111827'
+                        }}
                       >
                         {languageEmojis[lang]} {lang.charAt(0).toUpperCase() + lang.slice(1)}
                       </option>
@@ -488,7 +492,6 @@ export default function CodeGeneratorClient() {
                         fontSize: `${fontSize}px`,
                         lineHeight: 1.6,
                         padding: window.innerWidth < 640 ? "1rem" : "1.5rem",
-                        backgroundColor: "transparent",
                         borderRadius: 0,
                       }}
                       showLineNumbers
