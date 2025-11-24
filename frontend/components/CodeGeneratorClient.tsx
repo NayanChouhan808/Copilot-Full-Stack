@@ -7,7 +7,7 @@ import { usePromptHistory } from "@/contexts/PromptHistoryContext";
 import type { Language } from "@/types";
 
 export default function CodeGeneratorClient() {
-  const { prompts, addPrompt, toggleFavorite, deletePrompt } = usePromptHistory();
+  const { prompts, addPrompt, toggleFavorite, deletePrompt, clearHistory } = usePromptHistory();
   
   const [prompt, setPrompt] = useState("");
   const [language, setLanguage] = useState<Language>("python");
@@ -215,6 +215,19 @@ export default function CodeGeneratorClient() {
                     <span className="text-xs text-gray-500 font-medium">{filteredPrompts.length} items</span>
                   </div>
                 </div>
+                {prompts.length > 0 && (
+                  <button
+                    onClick={() => {
+                      if (confirm('Delete all history? This cannot be undone.')) {
+                        clearHistory();
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs font-semibold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg transition-all duration-200 hover:scale-105"
+                    title="Clear all history"
+                  >
+                    Clear All
+                  </button>
+                )}
               </div>
 
               {/* Search Bar */}
@@ -271,16 +284,30 @@ export default function CodeGeneratorClient() {
                           <span className="px-2 sm:px-3 py-1 text-xs font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-lg uppercase tracking-wide shadow-md">
                             {languageEmojis[p.language as Language]} {p.language}
                           </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFavorite(p.id);
-                            }}
-                            className="text-xl sm:text-2xl hover:scale-125 transition-transform"
-                            title={p.isFavorite ? "Remove favorite" : "Add favorite"}
-                          >
-                            {p.isFavorite ? "⭐" : "☆"}
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(p.id);
+                              }}
+                              className="text-xl sm:text-2xl hover:scale-125 transition-transform"
+                              title={p.isFavorite ? "Remove favorite" : "Add favorite"}
+                            >
+                              {p.isFavorite ? "⭐" : "☆"}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm('Delete this history item?')) {
+                                  deletePrompt(p.id);
+                                }
+                              }}
+                              className="text-lg sm:text-xl text-red-500 hover:text-red-700 hover:scale-125 transition-all"
+                              title="Delete"
+                            >
+                              🗑️
+                            </button>
+                          </div>
                         </div>
                         <p className="text-sm sm:text-base text-gray-700 line-clamp-2 mb-2 font-medium">{p.prompt}</p>
                         <p className="text-xs text-gray-500 hidden sm:flex items-center">
