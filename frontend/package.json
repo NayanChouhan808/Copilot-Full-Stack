@@ -2,6 +2,7 @@
   "name": "code-generation-copilot",
   "version": "1.0.0",
   "private": true,
+  "author": "Nayan Chouhan <https://github.com/NayanChouhan808>",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -43,6 +43,11 @@ Modern AI-powered code generation tool with glassmorphism UI.
    - Backend: `GEMINI_API_KEY`, `DATABASE_URL`
    - Frontend: `NEXT_PUBLIC_API_URL`
 
+## Author
+
+**Nayan Chouhan**  
+GitHub: [@NayanChouhan808](https://github.com/NayanChouhan808)
+
 ## License
 
 MIT
