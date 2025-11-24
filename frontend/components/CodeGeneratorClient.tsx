@@ -215,7 +215,7 @@ export default function CodeGeneratorClient() {
                   </div>
                   <div>
                     <h2 className="text-lg sm:text-xl font-bold gradient-text">History</h2>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{filteredPrompts.length} items</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-300">{filteredPrompts.length} items</span>
                   </div>
                 </div>
               </div>
@@ -254,7 +254,7 @@ export default function CodeGeneratorClient() {
                 {filteredPrompts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full py-8 sm:py-12">
                     <div className="text-5xl sm:text-6xl mb-3 sm:mb-4 animate-pulse-slow">📝</div>
-                    <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 text-center">
+                    <p className="text-sm sm:text-base text-gray-500 dark:text-gray-300 text-center">
                       {searchQuery || filterLanguage !== "all" ? "No matches found" : "No history yet"}
                     </p>
                   </div>
@@ -286,7 +286,7 @@ export default function CodeGeneratorClient() {
                           </button>
                         </div>
                         <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200 line-clamp-2 mb-2 font-medium">{p.prompt}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:flex items-center">
+                        <p className="text-xs text-gray-500 dark:text-gray-300 hidden sm:flex items-center">
                           <span className="mr-1">🕐</span>
                           {new Date(p.timestamp).toLocaleDateString()}
                         </p>
@@ -362,7 +362,7 @@ export default function CodeGeneratorClient() {
                       }
                     }}
                   />
-                  <div className="absolute bottom-3 right-3 px-3 py-1 glass dark:glass-dark rounded-lg text-xs text-gray-500 dark:text-gray-400 badge-glow">
+                  <div className="absolute bottom-3 right-3 px-3 py-1 glass dark:glass-dark rounded-lg text-xs text-gray-500 dark:text-gray-200 badge-glow">
                     {prompt.length} chars
                   </div>
                 </div>
@@ -420,7 +420,7 @@ export default function CodeGeneratorClient() {
                     <p className="text-lg sm:text-xl font-bold gradient-text mb-2">
                       Generating your code...
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-300">
                       Please wait a moment
                     </p>
                   </div>
@@ -453,7 +453,7 @@ export default function CodeGeneratorClient() {
                         >
                           A-
                         </button>
-                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 px-2">{fontSize}px</span>
+                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-200 px-2">{fontSize}px</span>
                         <button
                           onClick={() => setFontSize(Math.min(24, fontSize + 1))}
                           className="px-2 py-1 text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
